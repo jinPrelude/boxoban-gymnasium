@@ -24,7 +24,7 @@ KEY_TO_ACTION = {
 
 
 def env_id_for(level_set: str, split: str | None) -> str:
-    if level_set in ("easy", "hard"):
+    if level_set == "hard":
         return f"Boxoban-{level_set}-v0"
     return f"Boxoban-{level_set}-{split}-v0"
 
@@ -35,8 +35,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--level-set",
-        default="hard",
-        choices=("easy", "hard", "medium", "unfiltered"),
+        default="unfiltered",
+        choices=("hard", "medium", "unfiltered"),
         help="Level set to load.",
     )
     parser.add_argument(
@@ -106,9 +106,9 @@ def main() -> int:
     parser = build_parser()
     args = parser.parse_args()
 
-    if args.level_set not in ("easy", "hard") and args.split is None:
+    if args.level_set != "hard" and args.split is None:
         args.split = "valid"
-    if args.level_set in ("easy", "hard") and args.split is not None:
+    if args.level_set == "hard" and args.split is not None:
         parser.error(f"{args.level_set} does not use --split. Remove --split.")
     if args.level_idx < 0:
         parser.error("--level-idx must be >= 0")
