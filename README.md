@@ -57,14 +57,20 @@ pip install pygame
 
 ## Registered Environment IDs
 
-| Environment ID | Level Set | Split | Levels |
-|---------------|-----------|-------|--------|
-| `Boxoban-hard-v0` | hard | - | 3,332 |
-| `Boxoban-medium-train-v0` | medium | train | 450,000 |
-| `Boxoban-medium-valid-v0` | medium | valid | 5,000 |
-| `Boxoban-unfiltered-train-v0` | unfiltered | train | 900,000 |
-| `Boxoban-unfiltered-valid-v0` | unfiltered | valid | 10,000 |
-| `Boxoban-unfiltered-test-v0` | unfiltered | test | 1,000 |
+| Environment ID | Level Set | Split | Levels | Action Space |
+|---------------|-----------|-------|--------|--------------|
+| `Boxoban-hard-v0` | hard | - | 3,332 | Discrete(4) |
+| `Boxoban-medium-train-v0` | medium | train | 450,000 | Discrete(4) |
+| `Boxoban-medium-valid-v0` | medium | valid | 5,000 | Discrete(4) |
+| `Boxoban-unfiltered-train-v0` | unfiltered | train | 900,000 | Discrete(4) |
+| `Boxoban-unfiltered-valid-v0` | unfiltered | valid | 10,000 | Discrete(4) |
+| `Boxoban-unfiltered-test-v0` | unfiltered | test | 1,000 | Discrete(4) |
+| `Boxoban-hard-v1` | hard | - | 3,332 | Discrete(5) |
+| `Boxoban-medium-train-v1` | medium | train | 450,000 | Discrete(5) |
+| `Boxoban-medium-valid-v1` | medium | valid | 5,000 | Discrete(5) |
+| `Boxoban-unfiltered-train-v1` | unfiltered | train | 900,000 | Discrete(5) |
+| `Boxoban-unfiltered-valid-v1` | unfiltered | valid | 10,000 | Discrete(5) |
+| `Boxoban-unfiltered-test-v1` | unfiltered | test | 1,000 | Discrete(5) |
 
 ## Environment Details
 
@@ -72,7 +78,8 @@ pip install pygame
 - Shape: `(10, 10, 3)` uint8
 
 ### Action Space
-- `Discrete(4)`: 0=up, 1=down, 2=left, 3=right
+- **v0** — `Discrete(4)`: 0=up, 1=down, 2=left, 3=right
+- **v1** — `Discrete(5)`: 0=noop, 1=up, 2=down, 3=left, 4=right
 
 ### Rewards
 | Event | Reward |

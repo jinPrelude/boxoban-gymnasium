@@ -249,3 +249,34 @@ class BoxobanEnv(gym.Env[np.ndarray, int]):
             "is_success": is_success,
             "steps": self._steps,
         }
+
+
+class BoxobanNoopEnv(BoxobanEnv):
+    """BoxobanEnv variant with noop as action 0.
+
+    Action space: Discrete(5) — 0=noop, 1=up, 2=down, 3=left, 4=right
+    """
+
+    def __init__(self, **kwargs: Any) -> None:
+        super().__init__(**kwargs)
+        self.action_space = spaces.Discrete(5)
+
+    def step(
+        self,
+        action: int,
+    ) -> tuple[np.ndarray, float, bool, bool, dict[str, Any]]:
+        action_int = int(action)
+        if action_int < 0 or action_int >= 5:
+            raise ValueError(f"Action must be in [0, 4], got {action!r}")
+
+        if action_int == 0:
+            reward = self.step_penalty
+            self._steps += 1
+            is_success = self._boxes_on_target == self._target_count
+            if is_success:
+                reward += self.solve_reward
+            terminated = bool(is_success)
+            truncated = self._steps >= self.max_steps
+            return self._obs, reward, terminated, truncated, self._info(is_success=is_success)
+
+        return super().step(action_int - 1)

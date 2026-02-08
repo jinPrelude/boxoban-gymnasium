@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 
 from boxoban.colors import PLAYER
-from boxoban.env import BoxobanEnv
+from boxoban.env import BoxobanEnv, BoxobanNoopEnv
 
 
 def _player_position(obs: np.ndarray) -> tuple[int, int]:
@@ -131,3 +131,74 @@ def test_fixed_level_idx(mini_boxoban_root: Path) -> None:
             level_root=str(mini_boxoban_root),
             fixed_level_idx=5,
         )
+
+
+def test_noop_env_action_space(mini_boxoban_root: Path) -> None:
+    env = BoxobanNoopEnv(level_set="medium", split="train", level_root=str(mini_boxoban_root))
+    assert env.action_space.n == 5
+    env.close()
+
+
+def test_noop_action_does_not_move(mini_boxoban_root: Path) -> None:
+    env = BoxobanNoopEnv(level_set="medium", split="train", level_root=str(mini_boxoban_root))
+    obs, _ = env.reset(seed=0, options={"level_idx": 0})
+    assert _player_position(obs) == (1, 1)
+
+    obs2, reward, terminated, truncated, info = env.step(0)
+
+    assert _player_position(obs2) == (1, 1)
+    assert np.array_equal(obs, obs2)
+    assert reward == pytest.approx(-0.1)
+    assert not terminated
+    assert not truncated
+    assert info["steps"] == 1
+    env.close()
+
+
+def test_noop_env_movement_actions(mini_boxoban_root: Path) -> None:
+    # Action 1 = up on wall_collision level (player at 1,1, wall above)
+    env = BoxobanNoopEnv(level_set="medium", split="train", level_root=str(mini_boxoban_root))
+    env.reset(seed=0, options={"level_idx": 0})
+
+    _, reward, terminated, truncated, info = env.step(1)  # up -> wall
+    assert reward == pytest.approx(-0.1)
+    assert not terminated
+    assert not truncated
+
+    env.close()
+
+    # Action 4 = right on push_on_off_goal level (pushes box onto goal)
+    env2 = BoxobanNoopEnv(level_set="medium", split="train", level_root=str(mini_boxoban_root))
+    env2.reset(seed=0, options={"level_idx": 1})
+
+    _, reward_on, terminated, truncated, info = env2.step(4)  # right
+    assert reward_on == pytest.approx(0.9)
+    assert info["boxes_on_target"] == 1
+    assert not terminated
+    assert not truncated
+    env2.close()
+
+
+def test_noop_env_truncation(mini_boxoban_root: Path) -> None:
+    env = BoxobanNoopEnv(
+        level_set="medium",
+        split="train",
+        level_root=str(mini_boxoban_root),
+        max_steps=1,
+    )
+    env.reset(seed=0, options={"level_idx": 0})
+    _, _, terminated, truncated, _ = env.step(0)  # noop
+    assert not terminated
+    assert truncated
+    env.close()
+
+
+def test_noop_env_invalid_action(mini_boxoban_root: Path) -> None:
+    env = BoxobanNoopEnv(level_set="medium", split="train", level_root=str(mini_boxoban_root))
+    env.reset(seed=0, options={"level_idx": 0})
+
+    with pytest.raises(ValueError):
+        env.step(5)
+    with pytest.raises(ValueError):
+        env.step(-1)
+    env.close()
