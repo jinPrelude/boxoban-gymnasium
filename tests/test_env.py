@@ -202,3 +202,22 @@ def test_noop_env_invalid_action(mini_boxoban_root: Path) -> None:
     with pytest.raises(ValueError):
         env.step(-1)
     env.close()
+
+
+@pytest.mark.parametrize("noop_penalty", [0.0, -0.01, -0.5])
+def test_noop_custom_penalty(mini_boxoban_root: Path, noop_penalty: float) -> None:
+    env = BoxobanNoopEnv(
+        level_set="medium",
+        split="train",
+        level_root=str(mini_boxoban_root),
+        noop_penalty=noop_penalty,
+    )
+    env.reset(seed=0, options={"level_idx": 0})
+
+    _, reward, _, _, _ = env.step(0)  # noop
+    assert reward == pytest.approx(noop_penalty)
+
+    # movement action should still use step_penalty (-0.1)
+    _, reward_move, _, _, _ = env.step(1)  # up -> wall
+    assert reward_move == pytest.approx(-0.1)
+    env.close()

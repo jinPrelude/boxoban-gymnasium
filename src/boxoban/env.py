@@ -257,9 +257,10 @@ class BoxobanNoopEnv(BoxobanEnv):
     Action space: Discrete(5) — 0=noop, 1=up, 2=down, 3=left, 4=right
     """
 
-    def __init__(self, **kwargs: Any) -> None:
+    def __init__(self, *, noop_penalty: float | None = None, **kwargs: Any) -> None:
         super().__init__(**kwargs)
         self.action_space = spaces.Discrete(5)
+        self.noop_penalty = noop_penalty if noop_penalty is not None else self.step_penalty
 
     def step(
         self,
@@ -270,7 +271,7 @@ class BoxobanNoopEnv(BoxobanEnv):
             raise ValueError(f"Action must be in [0, 4], got {action!r}")
 
         if action_int == 0:
-            reward = self.step_penalty
+            reward = self.noop_penalty
             self._steps += 1
             is_success = self._boxes_on_target == self._target_count
             if is_success:
