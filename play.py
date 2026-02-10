@@ -80,6 +80,20 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Seed used for the first reset.",
     )
+    parser.add_argument(
+        "--obs-size",
+        type=int,
+        default=None,
+        metavar="N",
+        help="Resize observation to NxN (e.g. 80). Applied before --tilt.",
+    )
+    parser.add_argument(
+        "--tilt",
+        type=float,
+        default=None,
+        metavar="AMOUNT",
+        help="Apply tilted perspective (e.g. 0.2). Implies --obs-size 80 if not set.",
+    )
     return parser
 
 
@@ -95,11 +109,13 @@ def action_from_key(key: int, pygame_module: Any) -> int | None:
     return None
 
 
-def to_surface(frame: np.ndarray, tile_size: int, pygame_module: Any) -> Any:
-    board_h, board_w, _ = frame.shape
+def to_surface(
+    frame: np.ndarray,
+    target_pixels: int,
+    pygame_module: Any,
+) -> Any:
     base = pygame_module.surfarray.make_surface(np.transpose(frame, (1, 0, 2)))
-    target_size = (board_w * tile_size, board_h * tile_size)
-    return pygame_module.transform.scale(base, target_size)
+    return pygame_module.transform.scale(base, (target_pixels, target_pixels))
 
 
 def main() -> int:
@@ -118,6 +134,14 @@ def main() -> int:
         parser.error("--max-steps must be > 0")
     if args.fps <= 0:
         parser.error("--fps must be > 0")
+    if args.obs_size is not None and args.obs_size <= 0:
+        parser.error("--obs-size must be > 0")
+    if args.tilt is not None and not (0.0 <= args.tilt < 0.5):
+        parser.error("--tilt must be in [0.0, 0.5)")
+
+    # --tilt implies --obs-size 80 (tilting a 10x10 image gives poor results)
+    if args.tilt is not None and args.obs_size is None:
+        args.obs_size = 80
 
     try:
         import pygame
@@ -133,6 +157,13 @@ def main() -> int:
         seed=args.seed,
         disable_env_checker=True,
     )
+
+    from boxoban.wrappers import ResizeObservationPIL, TiltedObservationWrapper
+
+    if args.obs_size is not None:
+        env = ResizeObservationPIL(env, shape=(args.obs_size, args.obs_size))
+    if args.tilt is not None:
+        env = TiltedObservationWrapper(env, tilt=args.tilt)
 
     pygame.init()
     pygame.display.set_caption("Boxoban Player")
@@ -195,7 +226,7 @@ def main() -> int:
                 obs, last_reward, terminated, truncated, info = env.step(action)
                 done = terminated or truncated
 
-            frame = to_surface(obs, args.tile_size, pygame)
+            frame = to_surface(obs, board_pixels, pygame)
 
             screen.fill((20, 22, 28))
             screen.blit(frame, (0, 0))

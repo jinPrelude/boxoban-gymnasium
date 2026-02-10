@@ -30,6 +30,9 @@ classifiers = [
 dev = [
   "pytest>=8.0",
 ]
+wrappers = [
+  "Pillow>=9.0",
+]
 
 [tool.setuptools]
 package-dir = {"" = "src"}
